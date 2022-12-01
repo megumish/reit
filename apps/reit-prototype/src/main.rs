@@ -1,9 +1,12 @@
 use std::mem::size_of;
 
+use futures::StreamExt;
 use libc::{c_void, AF_PACKET, ETH_P_ALL, IFNAMSIZ, SIOCGIFINDEX, SOCK_RAW};
+use reit_eth::socket::EthernetSocket;
+use reit_socket::{Socket, SocketBound};
 use tracing::info;
 
-fn main() {
+fn prototype_main() {
     tracing_subscriber::fmt::init();
 
     let socket = unsafe { libc::socket(AF_PACKET, SOCK_RAW, (ETH_P_ALL as u16).to_be() as i32) };
@@ -89,6 +92,15 @@ fn main() {
             info!("ICMP? {:?}", &ip_data[size_of::<EthernetHeader>()..]);
         }
     }
+}
+
+#[tokio::main]
+async fn main() {
+    let socket = EthernetSocket::new();
+
+    let server = socket.bind();
+
+    while let Some(packet) = server.stream().next().await {}
 }
 
 #[repr(C)]
